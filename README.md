@@ -1,108 +1,64 @@
-# Dubstrata Institutional Quantitative Evaluation Kit (`v3.2`)
+# Dubstrata Quantitative Evaluation Kit
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MuzikayiseKhuzwayo/dubstrata-quant-eval-kit/blob/main/quant-evaluation-kit.ipynb)
+[![Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/MuzikayiseKhuzwayo/dubstrata-quant-eval-kit/blob/main/quant-evaluation-kit.ipynb)
 
-> **Target Audience:** Systematic Quantitative Researchers, Portfolio Managers, Risk Engineers, and Autonomous AI Assistants (Claude Code, Cursor, Windsurf, Copilot).  
-> **Objective:** Deterministic, zero-dependency evaluation of Dubstrata's **16-Channel Multivariate Causal Tensor Stream ("The Fuel")**, **Sovereign Causal Foundation Model ("The Engine")**, and **Horizon-Resolved Attribution ("HRX Glass Box")**.  
-> **Portability Guarantee:** Zero local repository dependencies. Connects directly over TLS to the live Dubstrata production gateway (`https://api.dubstrata.com`) with in-memory Apache Parquet deserialization.
-
----
-
-## 📦 Repository Contents & Technical Dossiers
-
-| File | Description |
-| :--- | :--- |
-| **[`quant-evaluation-kit.ipynb`](./quant-evaluation-kit.ipynb)** | **Interactive Evaluation Notebook:** Pulls a live 4,096-bar (14.2-day) 5-minute Parquet partition into memory, verifies timestamp monotonicity ($t_i < t_{i+1}$) and fractional differentiation stationarity ($d^* = 0.42$), queries 9-quantile forward distributions (`/api/v1/predict/quantiles`), and audits 4-quadrant HRX attribution. |
-| **[`DUBSTRATA_16_CHANNEL_TENSOR_SCHEMA_SPEC.md`](./DUBSTRATA_16_CHANNEL_TENSOR_SCHEMA_SPEC.md)** | **16-Channel Schema & Mathematical Specification:** Full data dictionary for $\mathbf{X}(t) \in \mathbb{R}^{16 \times 512}$ across **Q1 (Microstructure & Derivatives)**, **Q2 (Sybil-Scrubbed Prediction Markets)**, **Q3 (Causal Knowledge Graph)**, and **Q4 (Macro Solvency & Event Clocks)**. |
-| **[`DUBSTRATA_DATA_VERIFICATION_METHODOLOGY.md`](./DUBSTRATA_DATA_VERIFICATION_METHODOLOGY.md)** | **Four-Layer Verification Methodology:** Documents Bi-Temporal Point-in-Time Stamping ($t_{\text{valid}} \le t_{\text{event}} \le t_{\text{ingest}}$), Polygon ERC-1155 CTF Disjoint-Set Union (DSU) Sybil wallet contraction ($HHI_{\text{clean}}$), Shannon entropy conviction ($\Psi_{\text{CSI}}$), and byte-span grounded claim extraction. |
-| **[`DUBSTRATA_FORWARD_EVALUATION_CASE_STUDIES.md`](./DUBSTRATA_FORWARD_EVALUATION_CASE_STUDIES.md)** | **Out-of-Sample Empirical Case Studies:** Production out-of-sample verification (`68.46%` 1h DHR, `+19.56 bps` HRX deletion gain) and real-world macro/prediction-market divergence studies. |
-| **[`DUBSTRATA_SIGNAL_TO_DECISION_OBSERVABILITY_GUIDE.md`](./DUBSTRATA_SIGNAL_TO_DECISION_OBSERVABILITY_GUIDE.md)** | **Signal-to-Decision Observability Trace:** End-to-end walkthrough tracing how raw orderbook toxicity (OFI/VPIN), de-Sybiled prediction market flow, and causal graph states propagate into conviction-gated risk brackets ($q_{10}$ VaR-95 stop / $q_{90}$ target). |
+Independent point-in-time (PIT) signal verification and walk-forward evaluation workbench for the **Dubstrata 16-Channel Multivariate Tensor** and **De-Sybiled Prediction Market (PM) Layer**.
 
 ---
 
-## 🚀 Quick Start (Local Jupyter / VS Code / Cursor)
+## Why This Repo Exists
 
-### 1. Clone & Install the 5 Standard PyData Libraries
+To properly validate an alternative signal, a quantitative researcher should not have to trust pre-computed API outputs or fixed targets. This repository includes a **raw point-in-time 5-minute historical sample** (`data/dubstrata_btc_pit_5m_sample.parquet`, **25,920 bars / 90 days**: `2026-06-24T04:50:00Z` to `2026-09-22T04:45:00Z`) so you can verify the signal **100% offline**:
 
-#### macOS / Linux / Bash
+1. **All 4 Bi-Temporal Timestamps on Every 5-Minute Row**:
+   - `t_valid` (`window_start`): Start of the 5-minute observation validity interval ($T_{\text{bar\_close}} - 300\text{s}$).
+   - `t_event`: Final source matching-engine / Polygon CTF block / SEC EDGAR event timestamp inside the 5-minute bar ($T_{\text{valid}} < T_{\text{event}}$).
+   - `t_ingest`: Immutable datastore transaction commit timestamp ($T_{\text{event}} < T_{\text{ingest}} \le T_{\text{bar\_close}}$). Any observation committed after `bar_close_time` is hard-gated out of bar $t$ and deferred to bar $t+1$.
+   - `bar_close_time` (`window_end`): The 5-minute decision cutoff $T_{\text{bar\_close}}$.
+2. **Raw Un-Differentiated BTC Spot OHLCV Prices**:
+   - `btc_open`, `btc_high`, `btc_low`, `btc_close`, `btc_volume` aligned at each 5-minute bar close so you can construct your own forward return targets $r_{t \to t+h} = \frac{\text{btc\_close}_{t+h}}{\text{btc\_close}_t} - 1$ over any horizon $h$.
+3. **All 16 Point-in-Time Stationary Channels**:
+   - **Q1 Microstructure**: `target_fracdiff_price` ($d^* = 0.42$), `target_log_volatility` (Garman-Klass), `microstructure_ofi_vpin`, `derivatives_surface_state`
+   - **Q2 De-Sybiled Prediction Markets**: `informed_market_prob`, `entropy_conviction_psi` ($\Psi_{\text{CSI}}$), `manipulation_haircut_mu` ($\mu_{\text{risk}}$ Sybil defense down-scaler), `informed_capital_imbalance`
+   - **Q3 Causal Knowledge Graph**: `friedkin_johnsen_belief`, `financial_impact_flow`, `perception_vector_drift`, `graph_conflict_entropy`
+   - **Q4 Macro Solvency & Catalyst Clock**: `fundamental_solvency_score`, `dynamic_primary_correlate`, `macro_liquidity_factor`, `scheduled_event_clock`
+
+---
+
+## Quick Start (Zero API Key Required)
+
 ```bash
 git clone https://github.com/MuzikayiseKhuzwayo/dubstrata-quant-eval-kit.git
 cd dubstrata-quant-eval-kit
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install requests pandas numpy matplotlib pyarrow jupyter
+pip install numpy pandas pyarrow scipy scikit-learn matplotlib jupyter
+jupyter notebook quant-evaluation-kit.ipynb
 ```
 
-#### Windows (PowerShell)
-```powershell
-git clone https://github.com/MuzikayiseKhuzwayo/dubstrata-quant-eval-kit.git
-Set-Location dubstrata-quant-eval-kit
-
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install requests pandas numpy matplotlib pyarrow jupyter
-```
-
-### 2. Configure Your Sandbox API Key
-
-Set your provisioned `DUBSTRATA_API_KEY` either as an environment variable or directly in **Cell 1** of [`quant-evaluation-kit.ipynb`](./quant-evaluation-kit.ipynb):
-
-```bash
-export DUBSTRATA_API_BASE="https://api.dubstrata.com"
-export DUBSTRATA_API_KEY="your_provisioned_api_key_here"
-export ASSET_SYMBOL="BTC/USD"
-```
-
-### 3. Run the Notebook
-
-Open [`quant-evaluation-kit.ipynb`](./quant-evaluation-kit.ipynb) in Jupyter, VS Code, Google Colab, or Kaggle (ensure **Internet** is enabled in Kaggle/Colab) and select **Run All Cells**.
+Inside `quant-evaluation-kit.ipynb`:
+- **Module 1 (Window Selector)**: Set `START_TIME`, `END_TIME`, and `HORIZON_BARS` (e.g., `3` = 15m, `12` = 1h, `48` = 4h) to slice any window from the local 90-day Parquet file (`data/dubstrata_btc_pit_5m_sample.parquet`) or pull a custom range via `GET /api/v1/tensor/sample?start_time=...&end_time=...`.
+- **Module 2 (4-Timestamp PIT & Zero-Lookahead Audit)**: Verifies `t_valid < t_event < t_ingest <= bar_close_time` on 100% of rows (`0` violations across 25,920 bars) and cross-correlates $\Delta \text{target\_fracdiff\_price}_t$ against past and future BTC returns ($r = -0.0009$ at lag $k=-1$, confirming zero future target leakage).
+- **Module 3 (Independent Target Builder)**: Constructs forward spot returns $r_{t \to t+h} = \frac{\text{btc\_close}_{t+h}}{\text{btc\_close}_t} - 1$ directly from `btc_close` with a strict right-edge purge boundary.
+- **Module 4 (Purged Walk-Forward Out-of-Sample Ablation)**: Compares `Macro/Micro Baseline (No PM)` vs. `De-Sybiled PM Layer Only` vs. `Combined (Baseline + PM Layer)` using a strictly purged expanding walk-forward loop (`tr_slice = slice(0, t_start - HORIZON_BARS)`).
+- **Module 5 (Walk-Forward Realistic Cost & Slippage Stress-Test)**: Evaluates Gross vs. Net equity curves, Sharpe ratios, drawdowns, and profit factors under configurable `TAKER_FEE_BPS` (`5.0 bps`), `MAKER_FEE_BPS` (`1.0 bp`), `BLENDED_FEE_BPS` (`2.0 bps`), `HALF_SPREAD_BPS` (`1.0 bp`), and `KYLE_SLIPPAGE_BPS` (`0.5 bp`).
+- **Module 6 (Optional Live API Appendix)**: Queries live `/api/v1/predict/quantiles` forecast cones if `DUBSTRATA_API_KEY` is set.
 
 ---
 
-## 🔬 Overview of the 16-Channel Stationary Tensor ($\mathbb{R}^{16 \times 512}$)
+## Summary of Walk-Forward Out-of-Sample Results (Built from Raw `btc_close`)
 
-| Quadrant | Channels | Core Features & Mathematical Formulation |
-| :--- | :---: | :--- |
-| **Q1: Microstructure & Derivatives** | `Ch 01 – 04` | • `target_fracdiff_price`: Stationary log-price ($d^* = 0.42$, $K = 1,332$ lags, ADF $p < 0.005$, Pearson $r > 0.90$)<br>• `target_log_volatility`: Rolling Yang-Zhang / Garman-Klass realized log-volatility<br>• `microstructure_ofi_vpin`: Multi-level CLOB Order Flow Imbalance scaled by VPIN toxicity<br>• `derivatives_surface_state`: 25-delta options risk reversal skew & dealer Gamma Exposure (GEX) |
-| **Q2: Scrubbed Prediction Markets** | `Ch 05 – 08` | • `informed_market_prob`: Decoupled Polymarket & Kalshi event consensus ($\beta \equiv 0$)<br>• `entropy_conviction_psi`: Shannon entropy conviction index ($\Psi_{\text{CSI}}$) scaled by Kyle's $\lambda$<br>• `manipulation_haircut_mu`: On-chain Polygon CTF DSU Sybil cluster & wash-trading penalty ($\mu_{\text{risk}}$)<br>• `informed_capital_imbalance`: KL divergence between top-decile Brier-rated wallets and retail flow |
-| **Q3: Causal Knowledge Graph** | `Ch 09 – 12` | • `friedkin_johnsen_belief`: Multi-hop network equilibrium belief state ($Y_i(t)$)<br>• `financial_impact_flow`: Decoupled CRH financial impact flow ($W_s$) over `:CAUSALLY_EXPOSED` edges<br>• `perception_vector_drift`: 3072-d semantic embedding cosine velocity across regulatory filings<br>• `graph_conflict_entropy`: Dual-agent claim contradiction Shannon entropy |
-| **Q4: Solvency & Macro Regimes** | `Ch 13 – 16` | • `fundamental_solvency_score`: Point-in-time balance sheet reserve & credit spread health<br>• `dynamic_primary_correlate`: Highest instantaneous Granger/graph-elasticity cross-asset correlate<br>• `macro_liquidity_factor`: Global central bank & sovereign yield curve PC1 liquidity factor<br>• `scheduled_event_clock`: Deterministic exponential countdown ($\tau_{\text{event}}$) to FOMC, CPI, NFP & OpEx |
-
----
-
-## ✅ Pass/Fail Acceptance Criteria Matrix
-
-When running [`quant-evaluation-kit.ipynb`](./quant-evaluation-kit.ipynb), the notebook automatically verifies the following institutional invariants:
-
-| Check ID | Product Offering | Target Metric | Assertion Condition | Expected Result |
-| :--- | :--- | :--- | :--- | :---: |
-| **A-01** | Offering A (Fuel) | Canonical Feature Channels | All 16 stationary channels present in Parquet slice | **PASS** |
-| **A-02** | Offering A (Fuel) | Timestamp Monotonicity | `timestamps.is_monotonic_increasing == True` ($t_v \le t_t$) | **PASS** |
-| **A-03** | Offering A (Fuel) | Optimal FracDiff Stationarity | $d^* = 0.42$, zero leading-zero padding, variance $> 0$ | **PASS** |
-| **B-01** | Offering B (Engine) | Directional Conviction Gate | $\Psi_{\text{CSI}} \in [0.0, 1.0]$ (Automated capital brake in chop) | **PASS** |
-| **B-02** | Offering B (Engine) | 9-Quantile Monotonicity | $q_{10} \le q_{20} \le \dots \le q_{90}$ ($q_{10} = \text{VaR}_{95}$ support) | **PASS** |
-| **B-03** | Offering B (Engine) | Multi-Horizon Uncertainty Cone | $q_{10}^{(h)} < q_{50}^{(h)} < q_{90}^{(h)}$ across $15\text{m}, 1\text{h}, 4\text{h}, 24\text{h}$ | **PASS** |
-| **C-01** | Offering C (HRX) | 4-Quadrant Attribution | $Q_1 + Q_2 + Q_3 + Q_4 = 100\%$ | **PASS** |
-| **C-02** | Offering C (HRX) | Deletion Gain Proof | $\Delta\text{Gain} = \mathcal{L}(\mathbf{X}_{\setminus\text{top}}) - \mathcal{L}(\mathbf{X}) > 0$ | **PASS** |
+| Window | Horizon | Macro/Micro Baseline OOS IC | De-Sybiled PM Layer OOS IC | Combined OOS IC | IC Uplift ($\Delta\text{IC}$) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **30-Day Window** (`2026-08-23` – `2026-09-22`) | **1h** ($h=12$) | `+0.0151` ($p=0.22$) | **`+0.0766`** ($p=4.6\times 10^{-10}$) | **`+0.0724`** ($p=3.8\times 10^{-9}$) | **`+0.0573`** |
+| **30-Day Window** (`2026-08-23` – `2026-09-22`) | **4h** ($h=48$) | `+0.0416` ($p=7.7\times 10^{-4}$) | **`+0.1801`** ($p=8.8\times 10^{-49}$) | **`+0.1587`** ($p=4.0\times 10^{-38}$) | **`+0.1171`** |
+| **90-Day Partition** (`2026-06-24` – `2026-09-22`) | **1h** ($h=12$) | `-0.0019` ($p=0.77$) | **`+0.0326`** ($p=1.4\times 10^{-6}$) | **`+0.0301`** ($p=8.6\times 10^{-6}$) | **`+0.0320`** |
+| **90-Day Partition** (`2026-06-24` – `2026-09-22`) | **4h** ($h=48$) | `+0.0064` ($p=0.34$) | **`+0.0552`** ($p=3.7\times 10^{-16}$) | **`+0.0543`** ($p=1.1\times 10^{-15}$) | **`+0.0479`** |
 
 ---
 
-## 🛠️ Diagnostic & HTTP Status Reference
+## References: Prediction Market Microstructure from a Systematic Trading Perspective
 
-| HTTP Status | Meaning | Resolution |
-| :---: | :--- | :--- |
-| **`200 OK`** | Successful evaluation response | Proceed to next notebook cell. |
-| **`401 Unauthorized`** | Missing or invalid API key | Verify `DUBSTRATA_API_KEY` in Cell 1 matches your provisioned bearer token. |
-| **`402 Payment Required`** | Sandbox evaluation quota exhausted | Contact `muzi@dubstrata.com` to top up sandbox evaluation credits. |
-| **`429 Too Many Requests`** | Rate limit throttled | Sandbox keys are capped at 30–300 req/min; add a 1s delay or request Tier-2 limits. |
-
----
-
-## 📬 Technical Contact & Research Portal
-
-* **Research & Whitepapers:** [https://dubstrata.com/research](https://dubstrata.com/research)
-* **HRX Command Center Portal:** [https://partners.dubstrata.com](https://partners.dubstrata.com)
-* **Lead Systems & Quant Contact:** `muzi@dubstrata.com`
+1. **Wolfers, J., & Zitzewitz, E. (2004 / 2006)** — *"Prediction Markets"* (*Journal of Economic Perspectives*, 18(2), 107–126) & *"Interpreting Prediction Market Prices as Probabilities"* (NBER Working Paper w12200). Foundational derivation of when binary contract prices converge to risk-neutral vs. objective probabilities under heterogeneous beliefs and wealth constraints.
+2. **Hanson, R. (2003 / 2007)** — *"Combinatorial Information Market Design"* (*Information Systems Frontiers*, 5(1), 107–119) & *"Logarithmic Market Scoring Rules for Modular Combinatorial Information Aggregation"*. Establishes the information-theoretic equivalence between market scoring rules, Kullback-Leibler divergence ($\Psi$), and inventory-driven automated market makers vs. central limit order books (CLOBs).
+3. **Manski, C. F. (2006) & Ottaviani, M., & Sørensen, P. N. (2007)** — *"Interpreting the Predictions of Prediction Markets"* (*Economics Letters*, 91(3), 425–429) & *"Outcome Manipulation in Corporate Prediction Markets"* (*Journal of the European Economic Association*, 5(2–3), 554–563). Analyzes strategic distortion and wash-volume spoofing in binary contracts—the theoretical motivation behind our on-chain Union-Find wallet clustering and manipulation haircut $\mu_{\text{risk}}$.
+4. **Kyle, A. S. (1985) & Easley, D., López de Prado, M. M., & O'Hara, M. (2012)** — *"Continuous Auctions and Insider Trading"* (*Econometrica*, 53(6), 1315–1335) & *"Flow Toxicity and Liquidity in a High-Frequency World"* (*Review of Financial Studies*, 25(5), 1457–1493). Connects informed order flow toxicity (VPIN / capital imbalance) in binary event books to price discovery lead-times ahead of underlying spot orderbooks.
